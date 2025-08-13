@@ -43,21 +43,14 @@ class ExplodedHelper {
                                              Collection<AndroidArchiveLibrary> androidLibraries,
                                              File folderOut) {
         FatUtils.logInfo('Merge ClassesJar')
-        Collection<File> allJarFiles = new ArrayList<>()
-        for (androidLibrary in androidLibraries) {
-            if (!androidLibrary.rootFolder.exists()) {
-                FatUtils.logInfo('[warning]' + androidLibrary.rootFolder + ' not found!')
-                continue
-            }
-            allJarFiles.add(androidLibrary.classesJarFile)
-        }
-        for (jarFile in allJarFiles) {
-            if (!jarFile.exists()) {
-                continue;
-            }
-            project.copy {
-                from project.zipTree(jarFile)
-                into folderOut
+
+        androidLibraries.each { androidLibrary ->
+            File jarFile = androidLibrary.getClassesJarFile()
+            if (jarFile.exists()) {
+                project.copy {
+                    from project.zipTree(jarFile)
+                    into folderOut
+                }
             }
         }
     }

@@ -7,6 +7,12 @@ import org.gradle.api.ProjectConfigurationException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.internal.tasks.TaskDependencyFactory
+import org.gradle.api.provider.MapProperty
+import org.gradle.internal.model.CalculatedValueContainerFactory
+
+import javax.inject.Inject
 
 /**
  * plugin entry
@@ -23,16 +29,30 @@ class FatAarPlugin implements Plugin<Project> {
 
     private Project project
 
-    private RClassesTransform transform
-
     private final Collection<Configuration> embedConfigurations = new ArrayList<>()
+
+    private MapProperty<String, List<AndroidArchiveLibrary>> variantPackagesProperty;
+
+    private CalculatedValueContainerFactory calculatedValueContainerFactory
+
+    private TaskDependencyFactory taskDependencyFactory
+
+    private FileResolver fileResolver
+
+    @Inject
+    FatAarPlugin(CalculatedValueContainerFactory calculatedValueContainerFactory,
+                 TaskDependencyFactory taskDependencyFactory,
+                 FileResolver fileResolver) {
+        this.calculatedValueContainerFactory = calculatedValueContainerFactory
+        this.taskDependencyFactory = taskDependencyFactory
+        this.fileResolver = fileResolver
+    }
 
     @Override
     void apply(Project project) {
         this.project = project
         checkAndroidPlugin()
         FatUtils.attach(project)
-        DirectoryManager.attach(project)
         project.extensions.create(FatAarExtension.NAME, FatAarExtension)
         createConfigurations()
         registerTransform()
@@ -42,9 +62,8 @@ class FatAarPlugin implements Plugin<Project> {
     }
 
     private registerTransform() {
-        transform = new RClassesTransform(project)
-        // register in project.afterEvaluate is invalid.
-        project.android.registerTransform(transform)
+        variantPackagesProperty = project.objects.mapProperty(String.class, List.class)
+        FatAarPluginHelper.registerAsmTransformation(project, variantPackagesProperty)
     }
 
     private void doAfterEvaluate() {
@@ -70,8 +89,8 @@ class FatAarPlugin implements Plugin<Project> {
             }
 
             if (!artifacts.isEmpty()) {
-                def processor = new VariantProcessor(project, variant)
-                processor.processVariant(artifacts, firstLevelDependencies, transform)
+                def processor = new VariantProcessor(project, variant, variantPackagesProperty)
+                processor.processVariant(artifacts, firstLevelDependencies)
             }
         }
     }
@@ -117,7 +136,7 @@ class FatAarPlugin implements Plugin<Project> {
         embedConfigurations.add(embedConf)
     }
 
-    private Collection<ResolvedArtifact> resolveArtifacts(Configuration configuration) {
+    private static Collection<ResolvedArtifact> resolveArtifacts(Configuration configuration) {
         def set = new ArrayList()
         if (configuration != null) {
             configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
@@ -132,7 +151,9 @@ class FatAarPlugin implements Plugin<Project> {
         return set
     }
 
-    private Collection<ResolvedArtifact> dealUnResolveArtifacts(Configuration configuration, LibraryVariant variant, Collection<ResolvedArtifact> artifacts) {
+    private Collection<ResolvedArtifact> dealUnResolveArtifacts(Configuration configuration,
+                                                                LibraryVariant variant,
+                                                                Collection<ResolvedArtifact> artifacts) {
         def artifactList = new ArrayList()
         configuration.resolvedConfiguration.firstLevelModuleDependencies.each { dependency ->
             def match = artifacts.any { artifact ->
@@ -140,7 +161,9 @@ class FatAarPlugin implements Plugin<Project> {
             }
 
             if (!match) {
-                def flavorArtifact = FlavorArtifact.createFlavorArtifact(project, variant, dependency)
+                def flavorArtifact = FlavorArtifact.createFlavorArtifact(
+                        project, variant, dependency, calculatedValueContainerFactory, fileResolver, taskDependencyFactory
+                )
                 if (flavorArtifact != null) {
                     artifactList.add(flavorArtifact)
                 }

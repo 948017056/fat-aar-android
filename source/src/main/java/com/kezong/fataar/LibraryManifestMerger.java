@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,7 +87,7 @@ public class LibraryManifestMerger extends DefaultTask {
 
         // fix utf-8 problem in windows
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(getOutputFile()), "UTF-8")
+                new FileOutputStream(getOutputFile()), StandardCharsets.UTF_8)
         );
         writer.append(mergingReport
                 .getMergedDocument(MergingReport.MergedManifestKind.MERGED));

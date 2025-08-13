@@ -4,42 +4,41 @@ import com.android.build.gradle.api.LibraryVariant;
 
 import org.gradle.api.Project;
 
-/**
- * Temp directory used by fat-aar
- */
-class DirectoryManager {
+final class DirectoryManager {
 
     private static final String RE_BUNDLE_FOLDER = "aar_rebundle";
 
     private static final String INTERMEDIATES_TEMP_FOLDER = "fat-aar";
 
-    private static Project sProject;
+    private final Project project
+    private final LibraryVariant variant
 
-    static void attach(Project project) {
-        sProject = project;
+    DirectoryManager(Project project, LibraryVariant variant) {
+        this.project = project
+        this.variant = variant
     }
 
-    static File getReBundleDirectory(LibraryVariant variant) {
-        return sProject.file("${sProject.getBuildDir()}/outputs/${RE_BUNDLE_FOLDER}/${variant.name}")
+    File getReBundleDirectory() {
+        return this.project.getLayout().getBuildDirectory()
+                .dir("outputs/${RE_BUNDLE_FOLDER}/${this.variant.name}")
+                .get().asFile
     }
 
-    static File getRJavaDirectory(LibraryVariant variant) {
-        return sProject.file("${sProject.getBuildDir()}/intermediates/${INTERMEDIATES_TEMP_FOLDER}/r/${variant.name}")
+    File getMergeClassDirectory() {
+        return this.project.getLayout().getBuildDirectory()
+                .dir("intermediates/${INTERMEDIATES_TEMP_FOLDER}/merge_classes/${this.variant.name}")
+                .get().asFile
     }
 
-    static File getRClassDirectory(LibraryVariant variant) {
-        return sProject.file("${sProject.getBuildDir()}/intermediates/${INTERMEDIATES_TEMP_FOLDER}/r-class/${variant.name}")
+    File getAarMainJarFile() {
+        return this.project.getLayout().getBuildDirectory()
+                .file("intermediates/aar_main_jar/${this.variant.name}/sync${this.variant.name.capitalize()}LibJars/classes.jar")
+                .get().asFile
     }
 
-    static File getRJarDirectory(LibraryVariant variant) {
-        return sProject.file("${sProject.getBuildDir()}/outputs/${RE_BUNDLE_FOLDER}/${variant.name}/libs")
-    }
-
-    static File getMergeClassDirectory(LibraryVariant variant) {
-        return sProject.file("${sProject.getBuildDir()}/intermediates/${INTERMEDIATES_TEMP_FOLDER}/merge_classes/${variant.name}")
-    }
-
-    static File getKotlinMetaDirectory(LibraryVariant variant) {
-        return sProject.file("${sProject.getBuildDir()}/tmp/kotlin-classes/${variant.name}/META-INF")
+    File getAarMainClassesWithKotlinModulesDirectory() {
+        return this.project.getLayout().getBuildDirectory()
+                .dir("intermediates/${INTERMEDIATES_TEMP_FOLDER}/aar_main_classes_with_kotlin_modules/${this.variant.name}")
+                .get().asFile
     }
 }
