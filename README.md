@@ -3,6 +3,10 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kezong/fat-aar-android/blob/master/LICENSE)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.kezong/fat-aar/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.kezong/fat-aar)
 
+https://github.com/aasitnikov/fat-aar-android
+    This fork adds support for AGP 8.0+
+    The solution of merging aar works with AGP 8.5 and Gradle 8.7
+
 - [中文文档](./README_CN.md)
 
 >**I am no longer engaged in research and development, so the project will not be updated and maintained.<br>**
