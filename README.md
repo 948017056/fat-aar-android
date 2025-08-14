@@ -5,6 +5,7 @@
 
 https://github.com/aasitnikov/fat-aar-android
     This fork adds support for AGP 8.0+
+    
     The solution of merging aar works with AGP 8.5 and Gradle 8.7
 
 - [中文文档](./README_CN.md)
